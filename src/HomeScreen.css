@@ -1,0 +1,14 @@
+body {
+  background-color: white;
+}
+.HomeVaultAddButton {
+  position: absolute;
+  z-index: 3;
+  top: -30px;
+  left: 0px;
+  right: 0px;
+  margin: 0px auto;
+}
+.ScreenCoverBlur {
+  backdrop-filter: blur(1px);
+}

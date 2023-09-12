@@ -1,0 +1,29 @@
+.CreateVault {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+.CreateVault .Top .AdvanceModeButton {
+  float: right;
+}
+.CreateVault .Mid {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+}
+
+.CreateVault .Item {
+  width: 100%;
+  padding: 10px;
+}
+
+.CreateVault .Top .Stepper {
+  margin-top: 40px;
+}
+.CreateVault .Bot {
+  margin: 30px;
+  display: flex;
+  justify-content: space-between;
+}
