@@ -3,3 +3,16 @@
   overflow-x: never;
   margin: 5px;
 }
+
+.FileDisplay {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 5px;
+}
+.FileDisplay > * {
+  padding: 5px;
+  flex: 30%;
+  max-width: 32%;
+}

@@ -23,7 +23,7 @@ interface I_state {
 export default class App extends React.Component<{}, I_state> {
   state: I_state = {
     vaults: [],
-    currentScreen: "VaultView",
+    currentScreen: "Homepage",
     openVault: undefined,
   };
   componentDidMount = () => {

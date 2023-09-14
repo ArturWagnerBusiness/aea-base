@@ -10,6 +10,7 @@ window.addEventListener(
   false
 );
 
+//@ts-ignore
 window.CORDOVA = {
   loadVaults: (callback) => {
     window.resolveLocalFileSystemURL(
@@ -20,7 +21,7 @@ window.CORDOVA = {
         entry.getFile("vaults.json", { create: true }, (fileEntry) => {
           window.CORDOVA?.getFileContent(fileEntry, (data) => {
             if (data === "") {
-              window.CORDOVA?.writeFileContent(fileEntry, "{}", (isSuccess) => {
+              window.CORDOVA?.writeFileContent(fileEntry, "[]", (isSuccess) => {
                 if (!isSuccess) console.log("Could not fill vaults.json");
                 callback([]);
               });
@@ -28,7 +29,10 @@ window.CORDOVA = {
               console.log("Got data  for vaults.json");
               callback(JSON.parse(data.toString()));
             } else {
-              callback([]);
+              window.CORDOVA?.writeFileContent(fileEntry, "[]", (isSuccess) => {
+                if (!isSuccess) console.log("Could not fill vaults.json");
+                callback([]);
+              });
             }
           });
         });
@@ -48,7 +52,11 @@ window.CORDOVA = {
             // console.log("Saving...");
             window.CORDOVA?.writeFileContent(
               fileEntry,
-              JSON.stringify(vaults),
+              JSON.stringify(
+                vaults.map((v) => {
+                  return { name: v.name, path: v.path, algorithm: v.algorithm };
+                })
+              ),
               (s) => {
                 // console.log("Write operation ", s ? "worked" : "failed");
                 callback(s);
@@ -151,7 +159,111 @@ window.CORDOVA = {
       onError
     );
   },
-  vaultCreateFile: (data, vault, callback) => {},
+  updateVault: (vault, callback) => {
+    window.resolveLocalFileSystemURL(
+      cordova.file.externalDataDirectory,
+      //@ts-ignore
+      (entry: DirectoryEntry) => {
+        // New directory
+        entry.getFile(
+          vault.info.path + "information.json",
+          { create: true },
+          (file) => {
+            console.log("Created information.json");
+            //@ts-ignore
+            const data = CryptoJS.AES.encrypt(
+              JSON.stringify(vault),
+              vault.info.password
+            );
+            window.CORDOVA?.writeFileContent(file, data.toString(), (state) => {
+              console.log(
+                "information.json encrypted data write was a - " + state
+                  ? "success"
+                  : "failure"
+              );
+            });
+          }
+        );
+      },
+      onError
+    );
+  },
+  getVaultFolder: (root, name) => {
+    if (name.length === 0)
+      return {
+        path: "",
+        content: root,
+      };
+    let newContent = root.filter((thing) => thing.encoded_name === name[0]);
+    let current = name.shift();
+    let result = window.CORDOVA?.getVaultFolder(newContent[0].children, name);
+    if (result)
+      return {
+        path: current + "/" + result.path,
+        content: result.content,
+      };
+    console.log("Critical error is getVaultFolder()");
+    throw "getVault Failed unexpectedly!";
+  },
+  getNextFreePath: (content) => {
+    for (let x = 0; x < 50000; x++) {
+      if (content.filter((item) => item.name === `${x}`).length === 0)
+        return `${x}`;
+    }
+    return null;
+  },
+  vaultCreateEntry: (encodedLocation, name, type, vault, callback) => {
+    const data = window.CORDOVA.getVaultFolder(vault.content, encodedLocation);
+    window.resolveLocalFileSystemURL(
+      cordova.file.externalDataDirectory,
+      //@ts-ignore
+      (entry: DirectoryEntry) => {
+        if (type === "folder") {
+          entry.getDirectory(
+            vault.info.path + data.path,
+            { create: true },
+            (status) => {
+              console.log("status", status);
+              let rawName = window.CORDOVA.getNextFreePath(data.content);
+              if (rawName === null) {
+                callback(false);
+                return;
+              }
+              data.content.push({
+                encoded_name: name,
+                name: rawName,
+                is_dir: true,
+                children: [],
+              });
+              window.CORDOVA?.updateVault(vault, callback);
+            }
+          );
+          // Same as "folder" but "file"
+        } else if (type === "file") {
+          entry.getFile(
+            vault.info.path + data.path,
+            { create: true },
+            (status) => {
+              console.log("status", status);
+              let rawName = window.CORDOVA.getNextFreePath(data.content);
+              if (rawName === null) {
+                callback(false);
+                return;
+              }
+              data.content.push({
+                encoded_name: name,
+                name: rawName,
+                is_dir: false,
+                children: [],
+              });
+              window.CORDOVA?.updateVault(vault, callback);
+            }
+          );
+        }
+      },
+      onError
+    );
+  },
   getFileContent: (file, callback) => {
     file.file((blob) => {
       var reader = new FileReader();

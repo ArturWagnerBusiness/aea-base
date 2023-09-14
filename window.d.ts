@@ -39,10 +39,27 @@ interface I_WindowCordova {
     info: I_VaultInformation,
     callback: callback<I_Vault | null>
   ) => void;
+  updateVault: (vault: I_Vault, callback: callback<boolean>) => void;
+  getVaultFolder: (
+    root: I_VaultContentItem[],
+    encodedLocation: string[]
+  ) => {
+    path: string;
+    content: I_VaultContentItem[];
+  };
+  vaultCreateEntry: (
+    encodedLocation: string[],
+    name: string,
+    type: "folder" | "file",
+    vault: I_Vault,
+    callback: callback<boolean>
+  ) => void;
+
   getFileContent: (
     file: FileEntry,
     callback: callback<string | ArrayBuffer | null>
   ) => void;
+  getNextFreePath: (content: I_VaultContentItem[]) => string | null;
   writeFileContent: (
     file: FileEntry,
     content: string,
@@ -61,6 +78,6 @@ interface I_WindowCordova {
 }
 
 interface Window {
-  CORDOVA: I_WindowCordova | undefined;
+  CORDOVA: I_WindowCordova;
 }
 // https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-8.html

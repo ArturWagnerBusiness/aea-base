@@ -142,7 +142,7 @@ export default class CreateVault extends React.Component<I_props, I_state> {
 
           {this.state.stage === 1 ? (
             <div className="Item">
-              <p>Please pick the path for your vault</p>
+              <p>Please pick the path for your vault (IGNORE)</p>
             </div>
           ) : (
             ""
@@ -263,7 +263,11 @@ export default class CreateVault extends React.Component<I_props, I_state> {
           <Button
             fullWidth
             size="large"
-            disabled={this.state.isCreatingVaultCompleted}
+            disabled={
+              this.state.stage === this.steps.length - 1
+                ? !this.state.isCreatingVaultCompleted
+                : false
+            }
             variant="contained"
             onClick={this.stepNext}
           >
