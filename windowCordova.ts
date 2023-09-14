@@ -175,13 +175,7 @@ window.CORDOVA = {
               JSON.stringify(vault),
               vault.info.password
             );
-            window.CORDOVA?.writeFileContent(file, data.toString(), (state) => {
-              console.log(
-                "information.json encrypted data write was a - " + state
-                  ? "success"
-                  : "failure"
-              );
-            });
+            window.CORDOVA?.writeFileContent(file, data.toString(), callback);
           }
         );
       },
@@ -213,25 +207,27 @@ window.CORDOVA = {
     return null;
   },
   vaultCreateEntry: (encodedLocation, name, type, vault, callback) => {
-    const data = window.CORDOVA.getVaultFolder(vault.content, encodedLocation);
+    const data = window.CORDOVA.getVaultFolder(vault.content, [
+      ...encodedLocation,
+    ]);
     window.resolveLocalFileSystemURL(
       cordova.file.externalDataDirectory,
       //@ts-ignore
       (entry: DirectoryEntry) => {
+        let rawName = window.CORDOVA.getNextFreePath(data.content);
+        if (rawName === null) {
+          callback(false);
+          return;
+        }
         if (type === "folder") {
           entry.getDirectory(
-            vault.info.path + data.path,
+            vault.info.path + data.path + rawName,
             { create: true },
             (status) => {
-              console.log("status", status);
-              let rawName = window.CORDOVA.getNextFreePath(data.content);
-              if (rawName === null) {
-                callback(false);
-                return;
-              }
+              // console.log("status", status);
               data.content.push({
                 encoded_name: name,
-                name: rawName,
+                name: rawName as string,
                 is_dir: true,
                 children: [],
               });
@@ -241,18 +237,13 @@ window.CORDOVA = {
           // Same as "folder" but "file"
         } else if (type === "file") {
           entry.getFile(
-            vault.info.path + data.path,
+            vault.info.path + data.path + rawName,
             { create: true },
             (status) => {
-              console.log("status", status);
-              let rawName = window.CORDOVA.getNextFreePath(data.content);
-              if (rawName === null) {
-                callback(false);
-                return;
-              }
+              // console.log("status", status);
               data.content.push({
                 encoded_name: name,
-                name: rawName,
+                name: rawName as string,
                 is_dir: false,
                 children: [],
               });

@@ -32,7 +32,11 @@ export default class HomeScreenRow extends React.Component<I_props, I_state> {
     if (!this.props.vault.password)
       this.props.vault.password = this.state.password;
     window.CORDOVA?.openVault(this.props.vault, (newVault) => {
-      if (!newVault) return;
+      if (!newVault) {
+        //@ts-ignore
+        delete this.props.vault.password;
+        return;
+      }
       newVault.is_open = true;
       this.props.openVault(newVault);
     });

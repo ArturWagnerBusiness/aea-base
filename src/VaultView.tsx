@@ -81,10 +81,9 @@ export default class VaultView extends React.Component<I_props, I_state> {
         </Breadcrumbs>
         <hr />
         <Box className="FileDisplay">
-          {window.CORDOVA.getVaultFolder(
-            this.props.openVault.content,
-            this.state.currentLocation
-          ).content.map((item) => {
+          {window.CORDOVA.getVaultFolder(this.props.openVault.content, [
+            ...this.state.currentLocation,
+          ]).content.map((item) => {
             return (
               <Paper
                 onClick={() => {
@@ -117,10 +116,9 @@ export default class VaultView extends React.Component<I_props, I_state> {
 
         <Box
           sx={{
-            height: 330,
-            transform: "translateZ(0px)",
-            flexGrow: 1,
-            display: "contents",
+            position: "fixed",
+            bottom: "70px",
+            right: "0px",
           }}
         >
           <SpeedDial
@@ -225,7 +223,7 @@ export default class VaultView extends React.Component<I_props, I_state> {
               onClick={() => {
                 let foundDupes = window.CORDOVA.getVaultFolder(
                   this.props.openVault.content,
-                  this.state.currentLocation
+                  [...this.state.currentLocation]
                 ).content.filter(
                   (item) => item.encoded_name === this.state.text
                 ).length;
@@ -236,33 +234,39 @@ export default class VaultView extends React.Component<I_props, I_state> {
                 switch (this.state.event) {
                   case "file":
                     window.CORDOVA.vaultCreateEntry(
-                      this.state.currentLocation,
+                      [...this.state.currentLocation],
                       this.state.text,
                       "file",
                       this.props.openVault,
                       (status) => {
                         if (!status) console.log("FAILED CREATING FILE");
-                        this.setState({ event: null });
-                        this.forceUpdate();
+                        this.setState(
+                          { event: null, text: "" },
+                          () => this.forceUpdate
+                        );
                       }
                     );
                     break;
                   case "folder":
                     window.CORDOVA.vaultCreateEntry(
-                      this.state.currentLocation,
+                      [...this.state.currentLocation],
                       this.state.text,
                       "folder",
                       this.props.openVault,
                       (status) => {
                         if (!status) console.log("FAILED CREATING FOLDER");
-                        this.setState({ event: null });
-                        this.forceUpdate();
+                        this.setState(
+                          { event: null, text: "" },
+                          () => this.forceUpdate
+                        );
                       }
                     );
                     break;
                   default:
-                    this.setState({ event: null });
-                    this.forceUpdate();
+                    this.setState(
+                      { event: null, text: "" },
+                      () => this.forceUpdate
+                    );
                     break;
                 }
               }}
