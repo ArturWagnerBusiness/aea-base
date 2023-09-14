@@ -12,7 +12,7 @@ import React from "react";
 import "./CreateVault.css";
 interface I_props {
   changeScreen: I_ChangeScreen;
-  addVault: (vault: I_Vault) => void;
+  addVault: (vault: I_Vault, callback: (isAdded: boolean) => void) => void;
 }
 interface I_state {
   stage: number;
@@ -23,9 +23,9 @@ interface I_state {
   password: string;
   password2: string;
   passwordWrong: string;
-  isCreatingVault: boolean;
+  isCreatingVaultCompleted: boolean;
   createdVault: I_Vault | undefined;
-  failMessage: string;
+  creatingVaultMessage: string;
 }
 export default class CreateVault extends React.Component<I_props, I_state> {
   state: I_state = {
@@ -37,9 +37,9 @@ export default class CreateVault extends React.Component<I_props, I_state> {
     password: "",
     password2: "",
     passwordWrong: "",
-    isCreatingVault: false,
+    isCreatingVaultCompleted: false,
     createdVault: undefined,
-    failMessage: "",
+    creatingVaultMessage: "Creating vault...",
   };
   steps = ["Name", "Location", "Password", "Creating"];
   stepBack = () => {
@@ -60,45 +60,44 @@ export default class CreateVault extends React.Component<I_props, I_state> {
       } else if (this.state.password.length < 3) {
         this.setState({ passwordWrong: "Passwords too short!" });
       } else {
-        this.setState({ stage: this.state.stage + 1, isCreatingVault: true });
+        this.setState({
+          stage: this.state.stage + 1,
+          isCreatingVaultCompleted: true,
+        });
         this.createNewVault();
       }
-    } else if (
-      this.state.stage === 3 &&
-      this.state.createdVault !== undefined
-    ) {
-      this.props.addVault(this.state.createdVault);
-      this.props.changeScreen("Homepage");
-    } else if (
-      this.state.stage === 3 &&
-      (this.state.createdVault === undefined ||
-        this.state.createdVault === null)
-    ) {
-      this.props.changeScreen("Homepage");
-    }
+    } else if (this.state.stage === 3) this.props.changeScreen("Homepage");
   };
-  cancel = () => {
-    this.props.changeScreen("Homepage");
-  };
+  cancel = () => this.props.changeScreen("Homepage");
+
   createNewVault = () => {
-    let vault = window.ENCRYPTION?.createVault({
-      name: "name",
-      location: "path",
-      password: "password",
-    });
-    if (vault === undefined) {
-      this.setState({
-        isCreatingVault: false,
-        failMessage: "Not running on mobile",
-      });
-    } else if (vault === null) {
-      this.setState({
-        isCreatingVault: false,
-        failMessage: "Encryption API Failed",
-      });
-    } else {
-      this.setState({ isCreatingVault: false, createdVault: vault });
-    }
+    window.CORDOVA?.createVault(
+      {
+        name: this.state.name,
+        path: "",
+        password: this.state.password,
+        algorithm: "AES",
+      },
+      (vault) => {
+        if (vault === null) {
+          this.setState({
+            isCreatingVaultCompleted: false,
+            creatingVaultMessage: "Vault could not be created",
+          });
+        } else {
+          this.setState({
+            creatingVaultMessage: "Adding vault to homepage...",
+            createdVault: vault,
+          });
+          this.props.addVault(vault, (isSuccess) => {
+            this.setState({
+              isCreatingVaultCompleted: true,
+              creatingVaultMessage: isSuccess ? "" : "Was unable to add vault!",
+            });
+          });
+        }
+      }
+    );
   };
   render = () => {
     return (
@@ -223,18 +222,14 @@ export default class CreateVault extends React.Component<I_props, I_state> {
 
           {this.state.stage === 3 ? (
             <>
-              <CircularProgress color="secondary" />
-              {this.state.isCreatingVault ? (
+              {this.state.isCreatingVaultCompleted ? (
                 <>
-                  <p>Creating</p>
-                </>
-              ) : this.state.createdVault === undefined ? (
-                <>
-                  <p>{this.state.failMessage}</p>
+                  <p>[Done]</p>
                 </>
               ) : (
                 <>
-                  <p>Done</p>
+                  <CircularProgress color="secondary" />
+                  <p>{this.state.creatingVaultMessage}</p>
                 </>
               )}
             </>
@@ -268,7 +263,7 @@ export default class CreateVault extends React.Component<I_props, I_state> {
           <Button
             fullWidth
             size="large"
-            disabled={this.state.isCreatingVault}
+            disabled={this.state.isCreatingVaultCompleted}
             variant="contained"
             onClick={this.stepNext}
           >

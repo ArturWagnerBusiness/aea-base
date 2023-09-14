@@ -15,13 +15,15 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import DnsIcon from "@mui/icons-material/Dns";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import NoteAddIcon from "@mui/icons-material/NoteAdd";
+import HomeScreenRow from "./HomeScreenRow";
 
 interface I_state {
   addOrCreateVaultMenu: boolean;
 }
 interface I_props {
-  vaults: I_Vault[];
+  vaults: I_VaultInformation[];
   changeScreen: I_ChangeScreen;
+  openVault: (vault: I_Vault) => void;
 }
 
 export default class HomeScreen extends React.Component<I_props, I_state> {
@@ -51,37 +53,26 @@ export default class HomeScreen extends React.Component<I_props, I_state> {
   render = () => {
     return (
       <div className="HomeScreen">
-        <input
-          type={"file"}
-          onChange={(e) => {
-            console.log(e.target.value);
-          }}
-        />
-        <button
-          onClick={() => {
-            (async () => {
-              const file = await chooser.getFile();
-              console.log(file ? file.name : "canceled");
-            })();
+        <div
+          className="App"
+          style={{
+            justifyContent:
+              this.props.vaults.length === 0 ? "center" : "flex-start",
           }}
         >
-          PRESS ME
-        </button>
-        <div className="App">
           {this.props.vaults.length === 0 ? (
             <>
               <p style={{ textAlign: "center" }}>You do not have any Vaults</p>
               <p style={{ textAlign: "center" }}>
                 Press (+) to create your first one
               </p>
-              <button
-                onClick={() => {
-                  window.CORDOVA?.loadVaults((v) => {});
-                }}
-              ></button>
             </>
           ) : (
-            <p style={{ textAlign: "center" }}>Loading Vaults...</p>
+            this.props.vaults.map((vault) => {
+              return (
+                <HomeScreenRow vault={vault} openVault={this.props.openVault} />
+              );
+            })
           )}
         </div>
         <Paper

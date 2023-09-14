@@ -12,3 +12,8 @@ body {
 .ScreenCoverBlur {
   backdrop-filter: blur(1px);
 }
+.App {
+  height: 95vh;
+  display: flex;
+  flex-direction: column;
+}

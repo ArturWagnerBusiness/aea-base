@@ -19,6 +19,8 @@
     "@types/react-dom": "^18.2.7",
     "cordova-plugin-chooser": "^1.3.2",
     "cordova-plugin-file": "^7.0.0",
+    "cordova.plugins.diagnostic": "^7.1.2",
+    "crypto-js": "^4.1.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
@@ -28,11 +30,11 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build && npm run build-interface",
-    "compile-types": "tsc windowCordova.ts windowEncryption.ts -jsx react-jsx --declaration true --emitDeclarationOnly true && npm run compile-types-move",
-    "compile-types-move": "mv windowCordova.d.ts ./src/types && mv windowEncryption.d.ts ./src/types",
-    "build-interface": "tsc windowCordova.ts windowEncryption.ts window.d.ts --target esnext --removeComments true -m commonjs -jsx react-jsx --skipLibCheck true && npm run build-interface-move",
-    "build-interface-move": "mv windowCordova.js ./build && mv windowEncryption.js ./build",
-    "test": "tsc -h"
+    "_compile-types": "tsc windowCordova.ts windowEncryption.ts -jsx react-jsx --declaration true --emitDeclarationOnly true && npm run compile-types-move",
+    "_compile-types-move": "mv windowCordova.d.ts ./src/types && mv windowEncryption.d.ts ./src/types",
+    "build-interface": "tsc windowCordova.ts window.d.ts --target esnext --removeComments true -m commonjs -jsx react-jsx --skipLibCheck true && npm run build-interface-move",
+    "build-interface-move": "mv windowCordova.js ./build",
+    "_test": "tsc -h"
   },
   "eslintConfig": {
     "extends": [

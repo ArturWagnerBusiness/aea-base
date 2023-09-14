@@ -1,0 +1,5 @@
+.Breadcrumbs ol {
+  flex-wrap: nowrap;
+  overflow-x: never;
+  margin: 5px;
+}
