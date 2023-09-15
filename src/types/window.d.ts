@@ -54,7 +54,14 @@ interface I_WindowCordova {
     vault: I_Vault,
     callback: callback<boolean>
   ) => void;
-
+  performVaultFileOperation: (
+    encodedLocation: string[],
+    name: string,
+    vault: I_Vault,
+    action: "read" | "write",
+    data: string,
+    callback: callback<boolean | string>
+  ) => void;
   getFileContent: (
     file: FileEntry,
     callback: callback<string | ArrayBuffer | null>

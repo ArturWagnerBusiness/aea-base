@@ -186,14 +186,16 @@ window.CORDOVA = {
     if (name.length === 0)
       return {
         path: "",
+        raw: "",
         content: root,
       };
     let newContent = root.filter((thing) => thing.encoded_name === name[0]);
-    let current = name.shift();
+    name.shift();
     let result = window.CORDOVA?.getVaultFolder(newContent[0].children, name);
     if (result)
       return {
-        path: current + "/" + result.path,
+        path: newContent[0].encoded_name + "/" + result.path,
+        raw: newContent[0].name + "/" + result.raw,
         content: result.content,
       };
     console.log("Critical error is getVaultFolder()");
@@ -205,6 +207,58 @@ window.CORDOVA = {
         return `${x}`;
     }
     return null;
+  },
+
+  performVaultFileOperation: (
+    encodedLocation,
+    name,
+    vault,
+    action,
+    data,
+    callback
+  ) => {
+    const here = window.CORDOVA.getVaultFolder(vault.content, [
+      ...encodedLocation,
+    ]);
+    const rawName = here.content.filter((i) => i.encoded_name === name)[0].name;
+    window.resolveLocalFileSystemURL(
+      cordova.file.externalDataDirectory,
+      //@ts-ignore
+      (entry: DirectoryEntry) => {
+        entry.getFile(
+          vault.info.path + here.raw + rawName,
+          { create: false },
+          (file) => {
+            if (action === "read") {
+              window.CORDOVA?.getFileContent(file, (contentRaw) => {
+                if (contentRaw !== null) {
+                  try {
+                    //@ts-ignore
+                    let data = CryptoJS.AES.decrypt(
+                      contentRaw + "",
+                      vault.info.password
+                    );
+                    //@ts-ignore
+                    callback(data.toString(CryptoJS.enc.Utf8));
+                  } catch (e) {
+                    callback(false);
+                  }
+                } else callback(false);
+              });
+            } else {
+              //@ts-ignore
+              const payload = CryptoJS.AES.encrypt(data, vault.info.password);
+              window.CORDOVA.writeFileContent(
+                file,
+                payload.toString(),
+                callback
+              );
+            }
+          }
+        );
+      },
+      onError
+    );
   },
   vaultCreateEntry: (encodedLocation, name, type, vault, callback) => {
     const data = window.CORDOVA.getVaultFolder(vault.content, [
@@ -219,9 +273,10 @@ window.CORDOVA = {
           callback(false);
           return;
         }
+        console.log(vault.info.path + "|" + data.raw + "|" + rawName);
         if (type === "folder") {
           entry.getDirectory(
-            vault.info.path + data.path + rawName,
+            vault.info.path + data.raw + rawName,
             { create: true },
             (status) => {
               // console.log("status", status);
@@ -237,7 +292,7 @@ window.CORDOVA = {
           // Same as "folder" but "file"
         } else if (type === "file") {
           entry.getFile(
-            vault.info.path + data.path + rawName,
+            vault.info.path + data.raw + rawName,
             { create: true },
             (status) => {
               // console.log("status", status);

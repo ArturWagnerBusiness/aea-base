@@ -27,6 +27,7 @@ import CreateNewFolderIcon from "@mui/icons-material/CreateNewFolder";
 import NoteAddIcon from "@mui/icons-material/NoteAdd";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import FolderIcon from "@mui/icons-material/Folder";
+import Editor from "./Editor";
 
 interface I_props {
   changeScreen: I_ChangeScreen;
@@ -38,6 +39,7 @@ interface I_state {
   event: "folder" | "file" | "upload" | null;
   text: string;
   error: string;
+  openedFile: string | null;
 }
 export default class VaultView extends React.Component<I_props, I_state> {
   state: I_state = {
@@ -46,6 +48,7 @@ export default class VaultView extends React.Component<I_props, I_state> {
     event: null,
     text: "",
     error: "",
+    openedFile: null,
   };
   componentDidMount(): void {
     console.log(this.props.openVault);
@@ -95,7 +98,9 @@ export default class VaultView extends React.Component<I_props, I_state> {
                       ],
                     });
                   } else {
-                    console.log("CODE TO READING/OPEN FILE");
+                    this.setState({
+                      openedFile: item.encoded_name,
+                    });
                   }
                 }}
               >
@@ -275,6 +280,44 @@ export default class VaultView extends React.Component<I_props, I_state> {
             </Button>
           </DialogActions>
         </Dialog>
+        {this.state.openedFile !== null ? (
+          <Editor
+            display={`Editing ${this.state.openedFile}`}
+            onDataRequest={(callback) => {
+              window.CORDOVA.performVaultFileOperation(
+                [...this.state.currentLocation],
+                this.state.openedFile + "",
+                this.props.openVault,
+                "read",
+                "",
+                (response) => {
+                  if (typeof response === "string") {
+                    callback(response);
+                  } else console.log("Failed to read file");
+                }
+              );
+            }}
+            onClose={() => {
+              this.setState({ openedFile: null });
+            }}
+            onSave={(data) => {
+              window.CORDOVA.performVaultFileOperation(
+                [...this.state.currentLocation],
+                this.state.openedFile + "",
+                this.props.openVault,
+                "write",
+                data,
+                (response) => {
+                  if (response === true) {
+                    this.setState({ openedFile: null });
+                  } else console.log("Failed to write file");
+                }
+              );
+            }}
+          />
+        ) : (
+          ""
+        )}
       </div>
     );
   };
